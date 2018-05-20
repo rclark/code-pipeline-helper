@@ -98,10 +98,10 @@ const Resources = {
 };
 
 const Outputs = {
-  ContinuousPipeline: {
+  CustomResourceFunction: {
     Description: 'The ServiceToken to use in a custom cloudformation resource which maintains an AWS::CodePipeline::Pipeline',
     Value: cf.getAtt('CustomResourceFunction', 'Arn'),
-    Export: { Name: cf.stackName }
+    Export: { Name: cf.sub('${AWS::StackName}-custom-resource') }
   }
 };
 

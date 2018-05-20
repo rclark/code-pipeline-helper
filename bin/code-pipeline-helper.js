@@ -2,6 +2,9 @@
 
 'use strict';
 
+const fs = require('fs');
+const os = require('os');
+const crypto = require('crypto');
 const path = require('path');
 const cp = require('child_process');
 const util = require('util');
@@ -41,17 +44,42 @@ commands['set-oauth-secret'] = async ([token, region = 'us-east-1']) => {
 };
 
 commands['upload-bundle'] = async ([location = 'code-pipeline-helper']) => {
-  const bucket = location.split('/')[0];
+  const s3 = new AWS.S3();
+
+  const Bucket = location.split('/')[0];
   const prefix = location.split('/').slice(1).join('/');
 
   const options = { cwd: path.resolve(__dirname, '..') };
-  const sha = (await exec('git rev-parse HEAD', options)).stdout;
+  const sha = (await exec('git rev-parse HEAD', options)).stdout.trim();
 
-  let version
-  try { version = (await exec('git describe --tags --exact-match')).stdout; }
+  let version;
+  try { version = (await exec('git describe --tags --exact-match', options)).stdout.trim(); }
   catch (err) { false; }
 
-  console.log(bucket, prefix, sha, version);
+  const tmp = `${path.join(os.tmpdir(), crypto.randomBytes(8).toString('hex'))}.zip`;
+
+  await exec('npm ci --production', options);
+  await exec(`zip -rq --exclude=".git*" ${tmp} .`, options);
+
+  await s3.putObject({
+    Bucket,
+    Key: `${prefix}/${sha}.zip`,
+    Body: fs.createReadStream(tmp),
+    ACL: 'public-read'
+  }).promise();
+
+  console.log(`Uploaded bundle to s3://${Bucket}/${prefix}/${sha}.zip`);
+
+  if (version) {
+    await s3.putObject({
+      Bucket,
+      Key: `${prefix}/${version}.zip`,
+      Body: fs.createReadStream(tmp),
+      ACL: 'public-read'
+    }).promise();
+
+    console.log(`Uploaded bundle to s3://${Bucket}/${prefix}/${version}.zip`);
+  }
 };
 
 if (require.main === module) {
