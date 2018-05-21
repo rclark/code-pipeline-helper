@@ -12,7 +12,7 @@ const Parameters = {
   OAuthTokenSecretId: {
     Type: 'String',
     Description: 'The SecretId for a Github personal access token stored in AWS SecretsManager',
-    Default: 'CodePipelineHelper/AccessToken'
+    Default: 'code-pipeline-helper/access-token'
   }
 };
 
@@ -40,7 +40,7 @@ const Resources = {
       },
       Policies: [
         {
-          PolicyName: 'root',
+          PolicyName: 'main',
           PolicyDocument: {
             Statement: [
               {
@@ -53,8 +53,8 @@ const Resources = {
                 Action: 'secretsmanager:GetSecretValue',
                 Resource: '*',
                 Condition: {
-                  StringEquals: {
-                    SecretId: cf.ref('OAuthTokenSecretId')
+                  ArnLike: {
+                    'secretsmanager:SecretId': cf.sub('arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${OAuthTokenSecretId}*')
                   }
                 }
               },
@@ -65,6 +65,11 @@ const Resources = {
                   'codepipeline:UpdatePipeline',
                   'codepipeline:DeletePipeline'
                 ],
+                Resource: '*'
+              },
+              {
+                Effect: 'Allow',
+                Action: 'iam:PassRole',
                 Resource: '*'
               }
             ]
@@ -90,7 +95,7 @@ const Resources = {
           OAUTH_TOKEN_SECRET_ID: cf.ref('OAuthTokenSecretId')
         }
       },
-      Role: 'CustomResourceFunctionRole',
+      Role: cf.getAtt('CustomResourceFunctionRole', 'Arn'),
       MemorySize: 128,
       Timeout: 60
     }

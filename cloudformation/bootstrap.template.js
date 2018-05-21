@@ -36,6 +36,19 @@ const Resources = {
                 Effect: 'Allow',
                 Action: 'logs:*',
                 Resource: cf.getAtt('BundlerLogs', 'Arn')
+              },
+              {
+                Effect: 'Allow',
+                Action: [
+                  's3:ListBucket',
+                  's3:GetObject',
+                  's3:PutObject',
+                  's3:PutObjectAcl'
+                ],
+                Resource: [
+                  cf.sub('arn:${AWS::Partition}:s3:::code-pipeline-helper'),
+                  cf.sub('arn:${AWS::Partition}:s3:::code-pipeline-helper/*')
+                ]
               }
             ]
           }
@@ -49,11 +62,11 @@ const Resources = {
       Name: cf.sub('${AWS::StackName}-bundler'),
       Description: 'Uploads code-pipeline-helper bundles',
       Artifacts: {
-        Type: 'no_artifacts'
+        Type: 'CODEPIPELINE'
       },
       Environment: {
         Type: 'LINUX_CONTAINER',
-        ComputeType: 'BUILD_GENERAL_SMALL',
+        ComputeType: 'BUILD_GENERAL1_SMALL',
         Image: 'aws/codebuild/nodejs:8.11.0'
       },
       ServiceRole: cf.getAtt('BundlerRole', 'Arn'),
@@ -77,9 +90,9 @@ const Resources = {
             post_build:
               commands:
                 - export SHA_EXISTS=$(aws s3 ls s3://code-pipeline-helper/\${SHA}.zip)
-                - [ -z "\${SHA_EXISTS}" ] && aws s3 cp s3://code-pipeline-helper/\${SHA}.zip
+                - [ -z "\${SHA_EXISTS}" ] && aws s3 cp s3://code-pipeline-helper/\${SHA}.zip --acl public-read
                 - export TAG_EXISTS=$(aws s3 ls s3://code-pipeline-helper/\${TAG}.zip)
-                - [ -n "\${TAG}" ] && [ -z "\${TAG_EXISTS}" ]aws s3 cp s3://code-pipeline-helper/\${TAG}.zip
+                - [ -n "\${TAG}" ] && [ -z "\${TAG_EXISTS}" ] && aws s3 cp s3://code-pipeline-helper/\${TAG}.zip --acl public-read
         `)
       }
     }
@@ -101,7 +114,25 @@ const Resources = {
           PolicyName: 'main',
           PolicyDocument: {
             Statement: [
-
+              {
+                Effect: 'Allow',
+                Action: [
+                  's3:ListBucket',
+                  's3:GetBucketVersioning',
+                  's3:GetObject',
+                  's3:GetObjectVersion',
+                  's3:PutObject'
+                ],
+                Resource: [
+                  cf.sub('arn:${AWS::Partition}:s3:::code-pipeline-helper'),
+                  cf.sub('arn:${AWS::Partition}:s3:::code-pipeline-helper/*')
+                ]
+              },
+              {
+                Effect: 'Allow',
+                Action: 'codebuild:StartBuild',
+                Resource: cf.getAtt('Bundler', 'Arn')
+              }
             ]
           }
         }
@@ -111,7 +142,7 @@ const Resources = {
   Pipeline: {
     Type: 'Custom::CodePipelineHelper',
     Properties: {
-      ServiceToken: cf.importValue('code-pipeline-helper'),
+      ServiceToken: cf.importValue('code-pipeline-helper-production-custom-resource'),
       Owner: 'rclark',
       Repo: 'code-pipeline-helper',
       Branch: 'master',

@@ -19,7 +19,7 @@ commands['set-oauth-secret'] = async ([token, region = 'us-east-1']) => {
     throw new Error('No Github personal access token was provided');
 
   const sm = new AWS.SecretsManager({ region });
-  const name = 'CodePipelineHelper/AccessToken';
+  const name = 'code-pipeline-helper/access-token';
 
   let exists = false;
   try {
@@ -63,23 +63,25 @@ commands['upload-bundle'] = async ([location = 'code-pipeline-helper']) => {
 
   await s3.putObject({
     Bucket,
-    Key: `${prefix}/${sha}.zip`,
+    Key: `${prefix ? prefix + '/' : ''}${sha}.zip`,
     Body: fs.createReadStream(tmp),
     ACL: 'public-read'
   }).promise();
 
-  console.log(`Uploaded bundle to s3://${Bucket}/${prefix}/${sha}.zip`);
+  console.log(`Uploaded bundle to s3://${Bucket}/${prefix ? prefix + '/' : ''}${sha}.zip`);
 
   if (version) {
     await s3.putObject({
       Bucket,
-      Key: `${prefix}/${version}.zip`,
+      Key: `${prefix ? prefix + '/' : ''}${version}.zip`,
       Body: fs.createReadStream(tmp),
       ACL: 'public-read'
     }).promise();
 
-    console.log(`Uploaded bundle to s3://${Bucket}/${prefix}/${version}.zip`);
+    console.log(`Uploaded bundle to s3://${Bucket}/${prefix ? prefix + '/' : ''}${version}.zip`);
   }
+
+  await exec('npm ci', options);
 };
 
 if (require.main === module) {
