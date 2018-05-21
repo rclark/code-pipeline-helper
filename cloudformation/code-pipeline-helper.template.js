@@ -61,6 +61,8 @@ const Resources = {
               {
                 Effect: 'Allow',
                 Action: [
+                  'codepipeline:ListPipelines',
+                  'codepipeline:GetPipeline',
                   'codepipeline:CreatePipeline',
                   'codepipeline:UpdatePipeline',
                   'codepipeline:DeletePipeline',
