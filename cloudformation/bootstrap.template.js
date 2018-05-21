@@ -77,23 +77,12 @@ const Resources = {
           phases:
             install:
               commands:
+                - npm install -g npm@5.8.0
                 - npm ci --production
-            pre_build:
-              commands:
-                - export SHA=$(git rev-parse HEAD)
-                - export TAG=$(git describe --tags --exact-match 2> /dev/null)
-                - rm -rf .git/
             build:
               commands:
-                - zip -rq \${TMPDIR}/\${SHA}.zip .
-                - [ -n "\${TAG}" ] && cp \${TMPDIR}/\${SHA}.zip \${TMPDIR}/\${TAG}.zip
-            post_build:
-              commands:
-                - export SHA_EXISTS=$(aws s3 ls s3://code-pipeline-helper/\${SHA}.zip)
-                - [ -z "\${SHA_EXISTS}" ] && aws s3 cp s3://code-pipeline-helper/\${SHA}.zip --acl public-read
-                - export TAG_EXISTS=$(aws s3 ls s3://code-pipeline-helper/\${TAG}.zip)
-                - [ -n "\${TAG}" ] && [ -z "\${TAG_EXISTS}" ] && aws s3 cp s3://code-pipeline-helper/\${TAG}.zip --acl public-read
-        `)
+                - node bin/code-pipeline-helper upload-bundle
+        `) // @TODO: doesn't have .git folder for git commands to find sha/tag
       }
     }
   },

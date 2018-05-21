@@ -50,7 +50,7 @@ commands['upload-bundle'] = async ([location = 'code-pipeline-helper']) => {
   const prefix = location.split('/').slice(1).join('/');
 
   const options = { cwd: path.resolve(__dirname, '..') };
-  const sha = (await exec('git rev-parse HEAD', options)).stdout.trim();
+  const sha = process.env.CODEBUILD_RESOLVED_SOURCE_VERSION || (await exec('git rev-parse HEAD', options)).stdout.trim();
 
   let version;
   try { version = (await exec('git describe --tags --exact-match', options)).stdout.trim(); }
