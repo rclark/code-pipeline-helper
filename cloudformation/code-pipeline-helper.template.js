@@ -61,13 +61,13 @@ const Resources = {
               {
                 Effect: 'Allow',
                 Action: [
-                  'codepipeline:ListPipelines',
-                  'codepipeline:GetPipeline',
                   'codepipeline:CreatePipeline',
                   'codepipeline:UpdatePipeline',
                   'codepipeline:DeletePipeline',
                   'codepipeline:PutWebhook',
-                  'codepipeline:RegisterWebhookWithThirdParty'
+                  'codepipeline:DeleteWebhook',
+                  'codepipeline:RegisterWebhookWithThirdParty',
+                  'codepipeline:DeregisterWebhookWithThirdParty'
                 ],
                 Resource: '*'
               },
