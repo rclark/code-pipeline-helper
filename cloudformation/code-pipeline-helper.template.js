@@ -63,7 +63,9 @@ const Resources = {
                 Action: [
                   'codepipeline:CreatePipeline',
                   'codepipeline:UpdatePipeline',
-                  'codepipeline:DeletePipeline'
+                  'codepipeline:DeletePipeline',
+                  'codepipeline:PutWebhook',
+                  'codepipeline:RegisterWebhookWithThirdParty'
                 ],
                 Resource: '*'
               },
