@@ -82,7 +82,7 @@ const Resources = {
             build:
               commands:
                 - node bin/code-pipeline-helper upload-bundle
-        `) // @TODO: doesn't have .git folder for git commands to find sha/tag
+        `) // @TODO: doesn't have .git folder for git commands to find tag
       }
     }
   },
@@ -119,7 +119,10 @@ const Resources = {
               },
               {
                 Effect: 'Allow',
-                Action: 'codebuild:StartBuild',
+                Action: [
+                  'codebuild:StartBuild',
+                  'codebuild:BatchGetBuilds'
+                ],
                 Resource: cf.getAtt('Bundler', 'Arn')
               }
             ]
